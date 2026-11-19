@@ -1177,7 +1177,10 @@ G HUB のソフトウェア側のキー割り当て・マクロは実装して�
 Windows の FF43:0202 から、HID++ の直接アドレス 0xff を使用する。
 0x1F20 の電圧・リンク状態からバッテリー残量を推定し、0x8300 があればサイドトーンの
 取得、設定、読み戻しを行う。受信機の応答 0x05 はヘッドセットの無線リンク断として扱う。
-実機でその応答を確認した。リンク中の設定・残量の読み戻しは未検証。
+実機でその応答を確認した。リンク中はバッテリー残量とサイドトーンを取得でき、
+サイドトーンを 67% → 72% → 67% と変更して元の値への復元を確認した。
+`cargo run --locked -p devhub-hid --example g733_probe` で読み取り、
+`-- --sidetone-round-trip` で一時変更と復元を再現できる。
 
 参照: [G733 の HID++ 実装](https://github.com/felipearomani/g733-control/tree/main/internal/g733)、
 [OpenLogi の ADC Measurement 資料](https://openlogi.org/hidpp/features/x1f20-adc-measurement)。

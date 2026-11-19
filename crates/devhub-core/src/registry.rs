@@ -69,7 +69,7 @@ pub const KNOWN: &[KnownDevice] = &[
         name: "G733 Gaming Headset",
         transport: Transport::Wireless24G,
         driver: DriverKind::LogitechG733,
-        verified: false,
+        verified: true,
     },
     KnownDevice {
         vid: 0x046d,
