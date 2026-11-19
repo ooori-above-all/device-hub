@@ -5,8 +5,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let info = hub
         .scan()?
         .into_iter()
-        .find(|info| info.driver == DriverKind::LogitechHidpp)
-        .ok_or("PRO Wireless POWERPLAY receiver not found")?;
+        .filter(|info| info.driver == DriverKind::LogitechHidpp)
+        .min_by_key(|info| info.pid != 0xc539)
+        .ok_or("PRO Wireless receiver not found")?;
+    println!("Receiver: {} ({:04x}:{:04x})", info.name, info.vid, info.pid);
     let driver = hub.driver(&info.id)?;
     let args: Vec<_> = std::env::args().skip(1).collect();
     match args.as_slice() {

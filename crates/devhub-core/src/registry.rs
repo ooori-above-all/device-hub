@@ -60,6 +60,19 @@ const fn mf(
 pub const KNOWN: &[KnownDevice] = &[
     KnownDevice {
         vid: 0x046d,
+        pid: 0xc539,
+        usage_page: Some(0xff00),
+        usage: Some(2),
+        kind: DeviceKind::Mouse,
+        vendor: "Logicool",
+        model: "pro-wireless",
+        name: "PRO Wireless (LIGHTSPEED USB, read-only)",
+        transport: Transport::Wireless24G,
+        driver: DriverKind::LogitechHidpp,
+        verified: false,
+    },
+    KnownDevice {
+        vid: 0x046d,
         pid: 0xc53a,
         usage_page: Some(0xff00),
         usage: Some(2),

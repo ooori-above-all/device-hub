@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 
 const SLOT: u8 = 1;
 const REPORT: u8 = 0x11;
+const LIGHTSPEED_USB_PID: u16 = 0xc539;
 const POLLING: &str = "polling_wireless";
 const ONBOARD_ENABLE: &str = "onboard_enable";
 const ONBOARD_DISABLE: &str = "onboard_disable";
@@ -58,7 +59,7 @@ pub fn open(device: hidapi::HidDevice, info: DeviceInfo) -> HubResult<impl Devic
     let name_feature = feature(&channel, 0x0005)?;
     let name = request(&channel, name_feature, 1, &[0])?;
     if !name.starts_with(b"G Pro Wireless ") {
-        return Err(HubError::Unsupported("POWERPLAY paired mouse"));
+        return Err(HubError::Unsupported("paired mouse is not a PRO Wireless"));
     }
     let dpi = feature(&channel, 0x2201)?;
     let polling = feature(&channel, 0x8060)?;
@@ -78,20 +79,22 @@ pub fn open(device: hidapi::HidDevice, info: DeviceInfo) -> HubResult<impl Devic
         "ポーリングレート",
         rates,
     ));
-    caps.actions.extend([
-        ActionSpec::new(
-            ONBOARD_ENABLE,
-            section::PERFORMANCE,
-            "オンボードモードをオン",
-        )
-        .confirm("マウスに保存されたボタン割り当て、DPI、ポーリングレートが有効になります。"),
-        ActionSpec::new(
-            ONBOARD_DISABLE,
-            section::PERFORMANCE,
-            "オンボードモードをオフ",
-        )
-        .help("G HUB などのアプリで設定するモードに戻します。"),
-    ]);
+    if info.pid != LIGHTSPEED_USB_PID {
+        caps.actions.extend([
+            ActionSpec::new(
+                ONBOARD_ENABLE,
+                section::PERFORMANCE,
+                "オンボードモードをオン",
+            )
+            .confirm("マウスに保存されたボタン割り当て、DPI、ポーリングレートが有効になります。"),
+            ActionSpec::new(
+                ONBOARD_DISABLE,
+                section::PERFORMANCE,
+                "オンボードモードをオフ",
+            )
+            .help("G HUB などのアプリで設定するモードに戻します。"),
+        ]);
+    }
     caps.mouse = Some(MouseCaps {
         dpi_min: 100,
         dpi_max: 25600,
@@ -195,6 +198,9 @@ impl DeviceDriver for Logitech {
     }
 
     fn apply(&self, change: &Change) -> HubResult<()> {
+        if self.info.pid == LIGHTSPEED_USB_PID {
+            return Err(HubError::Unsupported("LIGHTSPEED USB settings are read-only"));
+        }
         let channel = self.channel.lock().unwrap_or_else(|err| err.into_inner());
         match change {
             Change::Setting {
@@ -264,6 +270,9 @@ impl DeviceDriver for Logitech {
     }
 
     fn run_action(&self, id: &str, _file: Option<&std::path::Path>) -> HubResult<ActionOutcome> {
+        if self.info.pid == LIGHTSPEED_USB_PID {
+            return Err(HubError::Unsupported("LIGHTSPEED USB settings are read-only"));
+        }
         let enabled = match id {
             ONBOARD_ENABLE => true,
             ONBOARD_DISABLE => false,
