@@ -72,6 +72,9 @@ pub enum DriverKind {
     Atk,
     /// www.lamzu.net / Aurora 系 (64B feature report、if2 FFFF:00)。
     Lamzu,
+    LogitechHidpp,
+    LogitechProKeyboard,
+    LogitechG733,
     /// 未割り当て (検出だけできる)。
     Unsupported,
 }
@@ -620,6 +623,8 @@ pub struct MouseCaps {
     pub dpi_max: u32,
     /// DPI の刻み (10/50/100)。
     pub dpi_step: u32,
+    /// ドラッグ中はプレビューし、操作確定時にだけ DPI を書き込む。
+    pub commit_dpi_on_release: bool,
     pub min_stages: usize,
     pub max_stages: usize,
     /// X/Y 個別 DPI。
@@ -632,6 +637,8 @@ pub struct MouseCaps {
     pub buttons: Vec<ButtonSlot>,
     /// 割り当て可能な種類。
     pub button_kinds: Vec<ButtonActionKind>,
+    /// Optional allowlist for discrete mouse, media and DPI actions.
+    pub button_options: Option<Vec<ButtonAction>>,
     /// 「左クリックが最低 1 個必要」を UI でも検査する。
     pub require_left_click: bool,
     pub macros: Option<MacroCaps>,

@@ -346,6 +346,7 @@ impl Shell {
             step,
             2.4,
             Some(color),
+            mc.commit_dpi_on_release,
             cx,
             move |this, v, cx| {
                 let mut s = stages_x.clone();
@@ -427,6 +428,7 @@ impl Shell {
                         step,
                         2.4,
                         Some(color),
+                        mc.commit_dpi_on_release,
                         cx,
                         move |this, v, cx| {
                             let mut s = stages_y.clone();
@@ -716,7 +718,11 @@ impl Shell {
                 let d = defaults.clone();
                 this.confirm(
                     "ボタン割り当てを既定に戻す",
-                    "すべてのボタンを工場出荷時の割り当てに戻します。",
+                    if n > d.len() {
+                        "一覧の先頭5ボタンを既定の割り当てに戻します。"
+                    } else {
+                        "すべてのボタンを工場出荷時の割り当てに戻します。"
+                    },
                     "戻す",
                     false,
                     std::rc::Rc::new(move |this, _, cx| {
