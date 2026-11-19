@@ -23,7 +23,17 @@ struct Logitech {
 }
 
 fn request(channel: &Channel, feature: u8, function: u8, params: &[u8]) -> HubResult<Vec<u8>> {
-    let header = [SLOT, feature, (function << 4) | 0x0d];
+    request_at(channel, SLOT, feature, function, params)
+}
+
+pub(super) fn request_at(
+    channel: &Channel,
+    slot: u8,
+    feature: u8,
+    function: u8,
+    params: &[u8],
+) -> HubResult<Vec<u8>> {
+    let header = [slot, feature, (function << 4) | 0x0d];
     let mut body = [0; 19];
     body[..3].copy_from_slice(&header);
     body[3..3 + params.len()].copy_from_slice(params);
@@ -37,7 +47,11 @@ fn request(channel: &Channel, feature: u8, function: u8, params: &[u8]) -> HubRe
         if reply.get(1..4) == Some(header.as_slice()) && reply.len() >= 7 {
             return Ok(reply[4..].to_vec());
         }
-        if reply.get(1..5) == Some(&[SLOT, 0xff, feature, header[2]]) && reply.len() >= 6 {
+        if reply.get(1..5) == Some(&[slot, 0xff, feature, header[2]]) && reply.len() >= 6 {
+            // The G733 direct endpoint returns 0x05 when the headset has no link.
+            if slot == 0xff && reply[5] == 0x05 {
+                return Err(HubError::Disconnected);
+            }
             return Err(HubError::Protocol(format!(
                 "HID++ error 0x{:02x}",
                 reply[5]
@@ -48,7 +62,11 @@ fn request(channel: &Channel, feature: u8, function: u8, params: &[u8]) -> HubRe
 }
 
 fn feature(channel: &Channel, id: u16) -> HubResult<u8> {
-    match request(channel, 0, 0, &id.to_be_bytes())?[0] {
+    feature_at(channel, SLOT, id)
+}
+
+pub(super) fn feature_at(channel: &Channel, slot: u8, id: u16) -> HubResult<u8> {
+    match request_at(channel, slot, 0, 0, &id.to_be_bytes())?[0] {
         0 => Err(HubError::Unsupported("HID++ feature")),
         index => Ok(index),
     }

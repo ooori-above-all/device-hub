@@ -1147,7 +1147,36 @@ DPI スライダーはドラッグ終了時に書き込む。ホストモード�
 G HUB 停止中に、復元後のセクター全体とモードが変更前と一致することを確認した。
 診断例の `-- --button-round-trip` で割り当ての往復確認を再現できる。
 
-専用 LIGHTSPEED レシーバー (046d:c539) と有線接続は未検証。照明、電池表示、
-G HUB 側のアプリ別プロファイルとマクロの移行は未実装。
+専用 LIGHTSPEED レシーバー (046d:c539) も FF00:0002 で検出する。
+Windows で受信機自体の接続状態レジスターへの応答を確認したが、ペア先のマウスは
+HID++ ping に未応答。現在は読み取り専用として登録し、設定変更を拒否する。
+`cargo run --locked -p devhub-hid --example logitech_probe -- --link` で、
+受信機自身の応答とペア先の応答を切り分けられる。
+有線接続、照明、電池表示、G HUB 側のアプリ別プロファイルとマクロの移行は未実装。
 
 参照: [libratbag の HID++ 実装](https://github.com/libratbag/libratbag/blob/master/src/hidpp20.c)。
+
+## Logicool PRO X Gaming Keyboard (046d:c339)
+
+Windows では FF43:0602 が 20 バイトの report 0x11、FF43:0604 が
+64 バイトの report 0x12。USB シリアル番号で同一筐体の組だけを開く。
+固定色の更新はロゴ、インジケーター、キーの色をグループ別に送り、report 0x11 で確定する。
+照明画面はこの起動中の最終適用値を表示する。キーボードからの現在色の読み戻しはない。
+実機では両コレクションを開き、固定色の送信が Windows HID API 上で成功した。
+点灯結果は未確認。`pro_x_probe --features` で機能テーブルを問い合わせ、
+デバイス名 (0x0005) は応答し、一般的なキー再割り当て (0x1B04)、
+G-keys (0x8010)、オンボードプロファイル (0x8100) は実機で非対応だった。
+G HUB のソフトウェア側のキー割り当て・マクロは実装していない。
+
+参照: [logitech-colors の C339 のレポート仕様](https://github.com/janyksteenbeek/logitech-colors/blob/main/main.go)、
+[OpenRGB の Logitech キーボード資料](https://openrgb-wiki.readthedocs.io/en/latest/Logitech-Keyboards/)。
+
+## Logicool G733 (046d:0ab5)
+
+Windows の FF43:0202 から、HID++ の直接アドレス 0xff を使用する。
+0x1F20 の電圧・リンク状態からバッテリー残量を推定し、0x8300 があればサイドトーンの
+取得、設定、読み戻しを行う。受信機の応答 0x05 はヘッドセットの無線リンク断として扱う。
+実機でその応答を確認した。リンク中の設定・残量の読み戻しは未検証。
+
+参照: [G733 の HID++ 実装](https://github.com/felipearomani/g733-control/tree/main/internal/g733)、
+[OpenLogi の ADC Measurement 資料](https://openlogi.org/hidpp/features/x1f20-adc-measurement)。

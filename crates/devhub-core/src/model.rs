@@ -73,6 +73,8 @@ pub enum DriverKind {
     /// www.lamzu.net / Aurora 系 (64B feature report、if2 FFFF:00)。
     Lamzu,
     LogitechHidpp,
+    LogitechProKeyboard,
+    LogitechG733,
     /// 未割り当て (検出だけできる)。
     Unsupported,
 }

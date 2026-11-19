@@ -56,6 +56,8 @@ impl Shell {
                         DriverKind::Walkplay => "WalkPlay (peq.szwalkplay.com 互換)".into(),
                         DriverKind::Atk => "ATK HUB 互換".into(),
                         DriverKind::LogitechHidpp => "Logicool HID++".into(),
+                        DriverKind::LogitechG733 => "Logicool G733 HID++".into(),
+                        DriverKind::LogitechProKeyboard => "Logicool PRO X RGB".into(),
                         DriverKind::Lamzu => "LAMZU Aurora 互換".into(),
                         DriverKind::Unsupported => "未対応".into(),
                     },

@@ -23,6 +23,8 @@ pub mod atk;
 #[doc(hidden)]
 pub mod lamzu;
 mod logitech;
+mod logitech_g733;
+mod logitech_pro_keyboard;
 #[allow(dead_code)]
 mod mousefit;
 mod mousefit8;
@@ -55,6 +57,8 @@ fn driver_ready(kind: DriverKind) -> bool {
         DriverKind::Atk => true,
         DriverKind::Lamzu => true,
         DriverKind::LogitechHidpp => true,
+        DriverKind::LogitechG733 => true,
+        DriverKind::LogitechProKeyboard => true,
         DriverKind::Unsupported => false,
     }
 }
@@ -290,6 +294,11 @@ impl RealHub {
             DriverKind::Atk => Arc::new(atk::open(dev, info, events)?),
             DriverKind::Lamzu => Arc::new(lamzu::open(dev, info, events)?),
             DriverKind::LogitechHidpp => Arc::new(logitech::open(dev, info)?),
+            DriverKind::LogitechG733 => Arc::new(logitech_g733::open(dev, info)?),
+            DriverKind::LogitechProKeyboard => {
+                let api = self.api.lock().unwrap_or_else(|p| p.into_inner());
+                Arc::new(logitech_pro_keyboard::open(&api, dev, info)?)
+            }
             DriverKind::Unsupported => {
                 return Err(HubError::NotImplemented("このデバイスのドライバ"))
             }
