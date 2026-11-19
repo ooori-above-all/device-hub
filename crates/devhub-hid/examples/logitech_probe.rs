@@ -94,7 +94,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if std::env::args().any(|arg| arg == "--round-trip") {
         let mut stage = mouse.stages[0];
-        stage.x = if stage.x == 800 { 850 } else { 800 };
+        stage.x = if stage.x < 25600 {
+            stage.x + 50
+        } else {
+            stage.x - 50
+        };
         let dpi_change = |stage| Change::DpiStages {
             stages: vec![stage],
             active: 0,
@@ -103,7 +107,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let restore = driver.apply(&dpi_change(mouse.stages[0]));
         restore?;
         change?;
-        println!("DPI round trip passed");
+        println!(
+            "DPI round trip passed: {} -> {} -> {}",
+            mouse.stages[0].x, stage.x, mouse.stages[0].x
+        );
 
         let rate_change = |value| Change::Setting {
             id: "polling_wireless".into(),
@@ -118,7 +125,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let restore = driver.apply(&rate_change(polling.clone()));
         restore?;
         change?;
-        println!("Polling round trip passed");
+        println!(
+            "Polling round trip passed: {} -> {} -> {} Hz",
+            polling.as_choice(),
+            test_rate,
+            polling.as_choice()
+        );
     }
     Ok(())
 }

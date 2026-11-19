@@ -82,7 +82,7 @@ pub const KNOWN: &[KnownDevice] = &[
         name: "PRO X Gaming Keyboard",
         transport: Transport::Wired,
         driver: DriverKind::LogitechProKeyboard,
-        verified: false,
+        verified: true,
     },
     KnownDevice {
         vid: 0x046d,
@@ -92,10 +92,10 @@ pub const KNOWN: &[KnownDevice] = &[
         kind: DeviceKind::Mouse,
         vendor: "Logicool",
         model: "pro-wireless",
-        name: "PRO Wireless (LIGHTSPEED USB, read-only)",
+        name: "PRO Wireless (LIGHTSPEED USB)",
         transport: Transport::Wireless24G,
         driver: DriverKind::LogitechHidpp,
-        verified: false,
+        verified: true,
     },
     KnownDevice {
         vid: 0x046d,

@@ -8,7 +8,6 @@ use std::time::{Duration, Instant};
 
 const SLOT: u8 = 1;
 const REPORT: u8 = 0x11;
-const LIGHTSPEED_USB_PID: u16 = 0xc539;
 const POLLING: &str = "polling_wireless";
 const ONBOARD_ENABLE: &str = "onboard_enable";
 const ONBOARD_DISABLE: &str = "onboard_disable";
@@ -40,7 +39,12 @@ pub(super) fn request_at(
     channel.send_report(REPORT, &body)?;
     let deadline = Instant::now() + Duration::from_millis(500);
     while let Some(remaining) = deadline.checked_duration_since(Instant::now()) {
-        let reply = channel.recv(remaining.as_millis().max(1) as i32)?;
+        let reply = match channel.recv(remaining.as_millis().max(1) as i32) {
+            Err(HubError::Protocol(message)) if message == "read timeout" => {
+                return Err(HubError::Disconnected);
+            }
+            result => result?,
+        };
         if !matches!(reply.first(), Some(0x10 | 0x11)) {
             continue;
         }
@@ -58,7 +62,7 @@ pub(super) fn request_at(
             )));
         }
     }
-    Err(HubError::Protocol("HID++ reply timeout".into()))
+    Err(HubError::Disconnected)
 }
 
 fn feature(channel: &Channel, id: u16) -> HubResult<u8> {
@@ -97,22 +101,20 @@ pub fn open(device: hidapi::HidDevice, info: DeviceInfo) -> HubResult<impl Devic
         "ポーリングレート",
         rates,
     ));
-    if info.pid != LIGHTSPEED_USB_PID {
-        caps.actions.extend([
-            ActionSpec::new(
-                ONBOARD_ENABLE,
-                section::PERFORMANCE,
-                "オンボードモードをオン",
-            )
-            .confirm("マウスに保存されたボタン割り当て、DPI、ポーリングレートが有効になります。"),
-            ActionSpec::new(
-                ONBOARD_DISABLE,
-                section::PERFORMANCE,
-                "オンボードモードをオフ",
-            )
-            .help("G HUB などのアプリで設定するモードに戻します。"),
-        ]);
-    }
+    caps.actions.extend([
+        ActionSpec::new(
+            ONBOARD_ENABLE,
+            section::PERFORMANCE,
+            "オンボードモードをオン",
+        )
+        .confirm("マウスに保存されたボタン割り当て、DPI、ポーリングレートが有効になります。"),
+        ActionSpec::new(
+            ONBOARD_DISABLE,
+            section::PERFORMANCE,
+            "オンボードモードをオフ",
+        )
+        .help("G HUB などのアプリで設定するモードに戻します。"),
+    ]);
     caps.mouse = Some(MouseCaps {
         dpi_min: 100,
         dpi_max: 25600,
@@ -216,9 +218,6 @@ impl DeviceDriver for Logitech {
     }
 
     fn apply(&self, change: &Change) -> HubResult<()> {
-        if self.info.pid == LIGHTSPEED_USB_PID {
-            return Err(HubError::Unsupported("LIGHTSPEED USB settings are read-only"));
-        }
         let channel = self.channel.lock().unwrap_or_else(|err| err.into_inner());
         match change {
             Change::Setting {
@@ -288,9 +287,6 @@ impl DeviceDriver for Logitech {
     }
 
     fn run_action(&self, id: &str, _file: Option<&std::path::Path>) -> HubResult<ActionOutcome> {
-        if self.info.pid == LIGHTSPEED_USB_PID {
-            return Err(HubError::Unsupported("LIGHTSPEED USB settings are read-only"));
-        }
         let enabled = match id {
             ONBOARD_ENABLE => true,
             ONBOARD_DISABLE => false,
